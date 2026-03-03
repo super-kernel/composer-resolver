@@ -1,0 +1,18 @@
+{
+    "name": "super-kernel/composer-resolver",
+    "description": "The composer-resolver component for super-kernel.",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "SuperKernel\\ComposerResolver\\": "src/"
+        }
+    },
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^8.4",
+        "ext-pcntl": "*",
+        "super-kernel/path-resolver": "^1.0",
+        "super-kernel/annotation": "^1.0"
+    }
+}
