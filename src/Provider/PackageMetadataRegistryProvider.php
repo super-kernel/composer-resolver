@@ -68,7 +68,11 @@ final class PackageMetadataRegistryProvider
 
 			$classLoader = ClassLoaderProvider::make();
 			foreach (self::$packageMetadataRegistry->getPackages() as $package) {
-				$classLoader->addClassMap($package->getClassmap());
+				$packageName = $package->getName();
+				$pathResolver = $packageRegistry->getPackage($packageName)->getPathResolver();
+				foreach ($package->getClassmap() as $class => $path) {
+					$classLoader->addClassMap([$class => $pathResolver->to($path)->get()]);
+				}
 			}
 		}
 
