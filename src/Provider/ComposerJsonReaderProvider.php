@@ -7,20 +7,19 @@ use SuperKernel\Annotation\Factory;
 use SuperKernel\Annotation\Provider;
 use SuperKernel\ComposerResolver\ComposerJsonReader;
 use SuperKernel\ComposerResolver\Concerns\JsonReaderTrait;
-use SuperKernel\ComposerResolver\Contract\ComposerJsonReaderInterface;
 use SuperKernel\PathResolver\Provider\PathResolverProvider;
 
 #[
-	Provider(ComposerJsonReaderInterface::class),
+	Provider(ComposerJsonReader::class),
 	Factory,
 ]
 final class ComposerJsonReaderProvider
 {
 	use JsonReaderTrait;
 
-	private static ComposerJsonReaderInterface $composerJsonReader;
+	private static ComposerJsonReader $composerJsonReader;
 
-	public static function make(): ComposerJsonReaderInterface
+	public static function make(): ComposerJsonReader
 	{
 		if (!isset(self::$composerJsonReader)) {
 			$pathResolver = PathResolverProvider::make();
@@ -33,7 +32,7 @@ final class ComposerJsonReaderProvider
 		return self::$composerJsonReader;
 	}
 
-	public function __invoke(): ComposerJsonReaderInterface
+	public function __invoke(): ComposerJsonReader
 	{
 		return self::make();
 	}

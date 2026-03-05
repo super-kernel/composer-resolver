@@ -10,7 +10,6 @@ use SuperKernel\Annotation\Provider;
 use SuperKernel\ComposerResolver\Contract\PackageInterface;
 use SuperKernel\ComposerResolver\Contract\PackageMetadataInterface;
 use SuperKernel\ComposerResolver\Contract\PackageMetadataRegistryInterface;
-use SuperKernel\ComposerResolver\Contract\ScannerInterface;
 use SuperKernel\ComposerResolver\Factory\PackageMetadataFactory;
 use SuperKernel\ComposerResolver\Factory\ScannerFactory;
 use SuperKernel\ComposerResolver\PackageMetadata;
@@ -20,12 +19,11 @@ use SuperKernel\PathResolver\Provider\PathResolverProvider;
 use function file_put_contents;
 use function is_dir;
 use function is_file;
+use function is_null;
 use function mkdir;
-use function rename;
 use function serialize;
 use function str_replace;
 use function strlen;
-use function uniqid;
 use function unserialize;
 
 #[
@@ -36,32 +34,32 @@ final class PackageMetadataRegistryProvider
 {
 	private static PackageMetadataRegistryInterface $packageMetadataRegistry;
 
-	private ScannerInterface $scanner;
+	private static PathResolverInterface $pathResolver;
 
-	private PathResolverInterface $pathResolver;
-
-	private PackageMetadataFactory $packageMetadataFactory;
-
-	public function __construct()
+	private static function getPathResolver(): PathResolverInterface
 	{
-		$this->scanner = ScannerFactory::make();
-		$this->pathResolver = PathResolverProvider::make()->to('vendor')->to('.super-kernel')->to('package-metadata');
-		$this->packageMetadataFactory = new PackageMetadataFactory();
+		if (!isset(self::$pathResolver)) {
+			self::$pathResolver = PathResolverProvider::make()
+				->to('vendor')
+				->to('.super-kernel')
+				->to('package-metadata');
 
-		$dir = $this->pathResolver->get();
-		if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
-			throw new RuntimeException("Could not create cache dir: $dir");
+			$dir = self::$pathResolver->get();
+			if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+				throw new RuntimeException("Could not create cache dir: $dir");
+			}
 		}
+		return self::$pathResolver;
 	}
 
-	public function __invoke(): PackageMetadataRegistryInterface
+	public static function make(): PackageMetadataRegistryInterface
 	{
 		if (!isset(self::$packageMetadataRegistry)) {
 			$packageRegistry = PackageRegistryProvider::make();
 
 			$packagesMetadata = [];
 			foreach ($packageRegistry->getPackages() as $package) {
-				$packagesMetadata[] = $this->resolveMetadata($package);
+				$packagesMetadata[] = self::resolveMetadata($package);
 			}
 
 			self::$packageMetadataRegistry = new PackageMetadataRegistry(...$packagesMetadata);
@@ -79,43 +77,39 @@ final class PackageMetadataRegistryProvider
 		return self::$packageMetadataRegistry;
 	}
 
-	private function resolveMetadata(PackageInterface $package): PackageMetadataInterface
+	private static function resolveMetadata(PackageInterface $package): PackageMetadataInterface
 	{
 		$fileName = str_replace(['/', '\\'], '_', $package->getName());
-		$filePath = $this->pathResolver->to($fileName)->get();
+		$filePath = self::getPathResolver()->to($fileName)->get();
 
-		$cached = $this->loadCache($filePath);
 		$isPhar = strlen(Phar::running(false)) > 0;
-
-		$needsScan = false;
-		if (!$cached) {
-			$needsScan = true;
-		} elseif (!$isPhar) {
-			$currentRef = $package->getReference();
-			if ($currentRef === null || $cached->getReference() !== $currentRef) {
-				$needsScan = true;
-			}
+		if ($isPhar) {
+			return self::loadCache($filePath);
 		}
 
-		if ($needsScan) {
-			$this->scanner->execute(function () use ($package, $filePath) {
-				$metadata = $this->packageMetadataFactory->make($package);
-				$this->atomicWrite($filePath, $metadata);
-			});
-			return $this->loadCache($filePath) ?? throw new RuntimeException("Scan failed for {$package->getName()}");
+		if (is_null($package->getReference())) {
+			return self::scan($package, $filePath);
 		}
 
-		return $cached;
+		$cachePackage = self::loadCache($filePath);
+		if ($cachePackage?->getReference() !== $package->getReference()) {
+			return self::scan($package, $filePath);
+		}
+
+		return $cachePackage;
 	}
 
-	private function atomicWrite(string $path, PackageMetadataInterface $data): void
+	private static function scan(PackageInterface $package, string $filePath): ?PackageMetadataInterface
 	{
-		$temp = $path . '.' . uniqid('', true) . '.tmp';
-		file_put_contents($temp, serialize($data), LOCK_EX);
-		rename($temp, $path);
+		ScannerFactory::make()->execute(function () use ($package, $filePath) {
+			$metadata = PackageMetadataFactory::make($package);
+			file_put_contents($filePath, serialize($metadata), LOCK_EX);
+		});
+
+		return self::loadCache($filePath) ?? throw new RuntimeException("Scan failed for {$package->getName()}");
 	}
 
-	private function loadCache(string $path): ?PackageMetadataInterface
+	private static function loadCache(string $path): ?PackageMetadataInterface
 	{
 		if (!is_file($path)) return null;
 		$content = file_get_contents($path);
@@ -123,5 +117,10 @@ final class PackageMetadataRegistryProvider
 
 		$data = unserialize($content, ['allowed_classes' => [PackageMetadata::class]]);
 		return $data instanceof PackageMetadataInterface ? $data : null;
+	}
+
+	public function __invoke(): PackageMetadataRegistryInterface
+	{
+		return self::make();
 	}
 }

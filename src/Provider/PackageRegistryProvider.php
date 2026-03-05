@@ -6,7 +6,9 @@ namespace SuperKernel\ComposerResolver\Provider;
 use SuperKernel\Annotation\Factory;
 use SuperKernel\Annotation\Provider;
 use SuperKernel\ComposerResolver\Contract\PackageRegistryInterface;
+use SuperKernel\ComposerResolver\Package;
 use SuperKernel\ComposerResolver\PackageRegistry;
+use SuperKernel\PathResolver\Provider\PathResolverProvider;
 
 #[
 	Provider(PackageRegistryInterface::class),
@@ -19,10 +21,22 @@ final class PackageRegistryProvider
 	public static function make(): PackageRegistryInterface
 	{
 		if (!isset(self::$packageRegistry)) {
-			$composerJsonReader = ComposerJsonReaderProvider::make();
-			$composerLockReader = ComposerLockReaderProvider::make();
+			$composerJson = ComposerJsonReaderProvider::make()->toArray();
+			$composerLock = ComposerLockReaderProvider::make()->toArray();
 
-			self::$packageRegistry = new PackageRegistry($composerJsonReader, $composerLockReader);
+			$vendorDir = $composerJson['vendor-dir'] ?? 'vendor';
+			$pathResolver = PathResolverProvider::make();
+
+			$packages = [
+				$composerJson['name'] => new Package($pathResolver, ...$composerJson),
+			];
+			foreach (array_merge($composerLock['packages'] ?? [], $composerLock['packages-dev'] ?? []) as $data) {
+				$package = new Package($pathResolver->to($vendorDir)->to($data['name']), ...$data);
+
+				$packages[$package->getName()] = $package;
+			}
+
+			self::$packageRegistry = new PackageRegistry($packages);
 		}
 
 		return self::$packageRegistry;

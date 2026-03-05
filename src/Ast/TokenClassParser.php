@@ -25,11 +25,11 @@ use const T_WHITESPACE;
 
 final class TokenClassParser
 {
-	public function getFullyQualifiedClassName(string $code): ?string
+	public static function getFullyQualifiedClassName(string $code): ?string
 	{
-		$tokens           = token_get_all($code);
-		$namespace        = '';
-		$count            = count($tokens);
+		$tokens = token_get_all($code);
+		$namespace = '';
+		$count = count($tokens);
 		$gettingNamespace = false;
 
 		for ($i = 0; $i < $count; $i++) {
@@ -39,7 +39,7 @@ final class TokenClassParser
 				switch ($token[0]) {
 					case T_NAMESPACE:
 						$gettingNamespace = true;
-						$namespace        = '';
+						$namespace = '';
 						break;
 
 					case T_NAME_QUALIFIED:
@@ -54,12 +54,12 @@ final class TokenClassParser
 					case T_INTERFACE:
 					case T_TRAIT:
 					case T_ENUM:
-						if ($this->isClassConstant($tokens, $i)) {
+						if (self::isClassConstant($tokens, $i)) {
 							continue 2;
 						}
 
 						$gettingNamespace = false;
-						$className        = $this->extractClassName($tokens, $i);
+						$className = self::extractClassName($tokens, $i);
 						if ($className) {
 							return $namespace ? $namespace . '\\' . $className : $className;
 						}
@@ -73,7 +73,7 @@ final class TokenClassParser
 		return null;
 	}
 
-	private function isClassConstant(array $tokens, int $index): bool
+	private static function isClassConstant(array $tokens, int $index): bool
 	{
 		for ($i = $index - 1; $i >= 0; $i--) {
 			$token = $tokens[$i];
@@ -88,7 +88,7 @@ final class TokenClassParser
 		return false;
 	}
 
-	private function extractClassName(array $tokens, int $start): ?string
+	private static function extractClassName(array $tokens, int $start): ?string
 	{
 		$count = count($tokens);
 		for ($i = $start + 1; $i < $count; $i++) {

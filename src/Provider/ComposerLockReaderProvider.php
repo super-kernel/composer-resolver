@@ -7,20 +7,19 @@ use SuperKernel\Annotation\Factory;
 use SuperKernel\Annotation\Provider;
 use SuperKernel\ComposerResolver\ComposerLockReader;
 use SuperKernel\ComposerResolver\Concerns\JsonReaderTrait;
-use SuperKernel\ComposerResolver\Contract\ComposerLockReaderInterface;
 use SuperKernel\PathResolver\Provider\PathResolverProvider;
 
 #[
-	Provider(ComposerLockReaderInterface::class),
+	Provider(ComposerLockReader::class),
 	Factory,
 ]
 final class ComposerLockReaderProvider
 {
 	use JsonReaderTrait;
 
-	private static ComposerLockReaderInterface $composerLockReader;
+	private static ComposerLockReader $composerLockReader;
 
-	public static function make(): ComposerLockReaderInterface
+	public static function make(): ComposerLockReader
 	{
 		if (!isset(self::$composerLockReader)) {
 			self::$composerLockReader = new ComposerLockReader(
@@ -33,7 +32,7 @@ final class ComposerLockReaderProvider
 		return self::$composerLockReader;
 	}
 
-	public function __invoke(): ComposerLockReaderInterface
+	public function __invoke(): ComposerLockReader
 	{
 		return self::make();
 	}

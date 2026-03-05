@@ -27,35 +27,27 @@ use function trim;
 	Provider(PackageMetadataInterface::class),
 	Factory,
 ]
-final readonly class PackageMetadataFactory
+final class PackageMetadataFactory
 {
-
-	private TokenClassParser $parser;
-
-	public function __construct()
-	{
-		$this->parser = new TokenClassParser();
-	}
-
-	public function make(PackageInterface $package): PackageMetadataInterface
+	public static function make(PackageInterface $package): PackageMetadataInterface
 	{
 		$classmap = [];
 		/** @var SplFileInfo $file */
-		foreach ($this->getIterator($package) as $file) {
+		foreach (self::getIterator($package) as $file) {
 			if ('php' === $file->getExtension()) {
-				$this->processFile($package, $file, $classmap);
+				self::processFile($package, $file, $classmap);
 			}
 		}
 
-		return new PackageMetadata($package->getName(), $classmap);
+		return new PackageMetadata($package->getName(), $classmap, $package->getReference());
 	}
 
-	private function getIterator(PackageInterface $package): AppendIterator
+	private static function getIterator(PackageInterface $package): AppendIterator
 	{
 		$appendIterator = new AppendIterator();
-		$packagePath    = $package->getPathResolver();
+		$packagePath = $package->getPathResolver();
 
-		foreach ($this->getScanDirectories($package) as $directory) {
+		foreach (self::getScanDirectories($package) as $directory) {
 			$path = $packagePath->to($directory)->get();
 			if (!is_dir($path)) {
 				continue;
@@ -68,7 +60,7 @@ final readonly class PackageMetadataFactory
 		return $appendIterator;
 	}
 
-	private function getScanDirectories(PackageInterface $package): array
+	private static function getScanDirectories(PackageInterface $package): array
 	{
 		$autoloads = $package->getAutoload();
 
@@ -80,10 +72,10 @@ final readonly class PackageMetadataFactory
 				foreach ($autoloads[$type] as $paths) {
 					if (is_array($paths)) {
 						array_walk_recursive($paths, function ($p) use (&$dirs) {
-							$dirs[] = $this->normalizePath((string)$p);
+							$dirs[] = self::normalizePath((string)$p);
 						});
 					} else {
-						$dirs[] = $this->normalizePath((string)$paths);
+						$dirs[] = self::normalizePath((string)$paths);
 					}
 				}
 			}
@@ -92,17 +84,17 @@ final readonly class PackageMetadataFactory
 		return array_unique(array_filter($dirs));
 	}
 
-	private function normalizePath(string $path): string
+	private static function normalizePath(string $path): string
 	{
 		return trim($path, "./\\ ");
 	}
 
-	private function processFile(PackageInterface $package, SplFileInfo $file, array &$classmap): void
+	private static function processFile(PackageInterface $package, SplFileInfo $file, array &$classmap): void
 	{
 		$realPath = $file->getRealPath();
-		$content  = file_get_contents($realPath);
+		$content = file_get_contents($realPath);
 
-		$classname = $this->parser->getFullyQualifiedClassName($content);
+		$classname = TokenClassParser::getFullyQualifiedClassName($content);
 
 		if ($classname) {
 			$classmap[$classname] = str_replace(

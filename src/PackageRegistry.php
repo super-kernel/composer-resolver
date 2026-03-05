@@ -4,42 +4,17 @@ declare(strict_types=1);
 namespace SuperKernel\ComposerResolver;
 
 use RuntimeException;
-use SuperKernel\ComposerResolver\Contract\ComposerJsonReaderInterface;
-use SuperKernel\ComposerResolver\Contract\ComposerLockReaderInterface;
 use SuperKernel\ComposerResolver\Contract\PackageInterface;
 use SuperKernel\ComposerResolver\Contract\PackageRegistryInterface;
 use SuperKernel\ComposerResolver\Enum\PackageTypeEnum;
-use SuperKernel\PathResolver\Provider\PathResolverProvider;
 
 final readonly class PackageRegistry implements PackageRegistryInterface
 {
 	/**
-	 * @var array<PackageInterface> $packages
+	 * @param array $packages
 	 */
-	private array $packages;
-
-	public function __construct(
-		private ComposerJsonReaderInterface $composerJsonReader,
-		private ComposerLockReaderInterface $composerLockReader,
-	)
+	public function __construct(private array $packages)
 	{
-		$packages = [
-			$this->composerJsonReader->getName() => new Package(PathResolverProvider::make(), ...$this->composerJsonReader->toArray()),
-		];
-		foreach (array_merge(
-			         $this->composerLockReader->getPackages(),
-			         $this->composerLockReader->getPackagesDev(),
-		         ) as $data) {
-			$package = new Package(
-				   PathResolverProvider::make()->to($this->composerJsonReader->getConfig('vendor-dir') ?? 'vendor')->to($data['name']),
-				...$data,
-			);
-
-
-			$packages[$package->getName()] = $package;
-		}
-
-		$this->packages = $packages;
 	}
 
 	public function getPackages(): array
