@@ -10,11 +10,16 @@ use SuperKernel\ComposerResolver\Enum\PackageTypeEnum;
 
 final readonly class PackageRegistry implements PackageRegistryInterface
 {
-	/**
-	 * @param array $packages
-	 */
-	public function __construct(private array $packages)
+	private array $packages;
+
+	public function __construct(PackageInterface ...$packages)
 	{
+		$data = [];
+		foreach ($packages as $package) {
+			$data[$package->getName()] = $package;
+		}
+
+		$this->packages = $data;
 	}
 
 	public function getPackages(): array

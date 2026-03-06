@@ -27,16 +27,13 @@ final class PackageRegistryProvider
 			$vendorDir = $composerJson['vendor-dir'] ?? 'vendor';
 			$pathResolver = PathResolverProvider::make();
 
-			$packages = [
-				$composerJson['name'] => new Package($pathResolver, ...$composerJson),
-			];
+			$packages = [];
 			foreach (array_merge($composerLock['packages'] ?? [], $composerLock['packages-dev'] ?? []) as $data) {
-				$package = new Package($pathResolver->to($vendorDir)->to($data['name']), ...$data);
-
-				$packages[$package->getName()] = $package;
+				$packages[] = new Package($pathResolver->to($vendorDir)->to($data['name']), ...$data);
 			}
 
-			self::$packageRegistry = new PackageRegistry($packages);
+			$packages [] = new Package($pathResolver, ...$composerJson);
+			self::$packageRegistry = new PackageRegistry(...$packages);
 		}
 
 		return self::$packageRegistry;
