@@ -1,0 +1,42 @@
+{
+    "name": "super-kernel/composer-resolver",
+    "description": "The composer-resolver component for super-kernel.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "php",
+        "super-kernel",
+        "composer",
+        "resolver",
+        "composer-resolver"
+    ],
+    "homepage": "https://github.com/super-kernel/composer-resolver",
+    "support": {
+        "issues": "https://github.com/super-kernel/composer-resolver/issues",
+        "source": "https://github.com/super-kernel/composer-resolver"
+    },
+    "autoload": {
+        "psr-4": {
+            "SuperKernel\\ComposerResolver\\": "src/"
+        }
+    },
+    "config": {
+        "classmap-authoritative": true,
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "php": "~8.4.0",
+        "super-kernel/attribute": "~1.0.0",
+        "super-kernel/contract": "~1.0.0",
+        "super-kernel/process-handler": "~1.0.0",
+        "super-kernel/tokenizer": "~1.0.0"
+    },
+    "require-dev": {
+        "super-kernel/path-resolver": "~1.0.0",
+        "super-kernel/reflector": "~1.0.0",
+        "symfony/console": "~8.0.0"
+    }
+}
