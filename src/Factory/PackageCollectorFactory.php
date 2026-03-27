@@ -45,9 +45,7 @@ final readonly class PackageCollectorFactory
 
 	public function create(): PackageCollectorInterface
 	{
-		$packages = [
-			$this->getPackage([...$this->composerJsonReader]),
-		];
+		$packages = [];
 		foreach (
 			array_merge(
 				$this->composerLockReader['packages'] ?? [],
@@ -61,6 +59,8 @@ final readonly class PackageCollectorFactory
 
 			$packages[] = $package;
 		}
+
+		$packages[] = $this->getPackage([...$this->composerJsonReader]);
 
 		return new PackageCollector(...$packages);
 	}
