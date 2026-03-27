@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace SuperKernel\ComposerResolver\Provider;
 
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use SuperKernel\Attribute\Factory;
 use SuperKernel\Attribute\Provider;
 use SuperKernel\ComposerResolver\ComposerJsonReader;
@@ -20,9 +23,18 @@ final class ComposerJsonReaderProvider
 
 	private static ComposerJsonReaderInterface $composerJsonReader;
 
-	public function __invoke(PathResolverInterface $pathResolver): ComposerJsonReaderInterface
+	/**
+	 * @param ContainerInterface $container
+	 *
+	 * @return ComposerJsonReaderInterface
+	 * @throws ContainerExceptionInterface
+	 * @throws NotFoundExceptionInterface
+	 */
+	public function __invoke(ContainerInterface $container): ComposerJsonReaderInterface
 	{
 		if (!isset(self::$composerJsonReader)) {
+			$pathResolver = $container->get(PathResolverInterface::class);
+
 			self::$composerJsonReader = new ComposerJsonReader(
 				self::loadJsonToArray($pathResolver->to('composer.json')->get()),
 			);

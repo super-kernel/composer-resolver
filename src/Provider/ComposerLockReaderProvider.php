@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace SuperKernel\ComposerResolver\Provider;
 
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use SuperKernel\Attribute\Factory;
 use SuperKernel\Attribute\Provider;
 use SuperKernel\ComposerResolver\ComposerLockReader;
@@ -20,26 +23,20 @@ final class ComposerLockReaderProvider
 
 	private static ComposerLockReaderInterface $composerLockReader;
 
-	public static function make(PathResolverInterface $pathResolver): ComposerLockReaderInterface
+	/**
+	 * @param ContainerInterface $container
+	 *
+	 * @return ComposerLockReader
+	 * @throws ContainerExceptionInterface
+	 * @throws NotFoundExceptionInterface
+	 */
+	public function __invoke(ContainerInterface $container): ComposerLockReader
 	{
 		if (!isset(self::$composerLockReader)) {
-			self::$composerLockReader = new ComposerLockReader(
-				self::loadJsonToArray(
-					$pathResolver->to('composer.lock')->get(),
-				),
-			);
-		}
+			$pathResolver = $container->get(PathResolverInterface::class);
 
-		return self::$composerLockReader;
-	}
-
-	public function __invoke(PathResolverInterface $pathResolver): ComposerLockReader
-	{
-		if (!isset(self::$composerLockReader)) {
 			self::$composerLockReader = new ComposerLockReader(
-				self::loadJsonToArray(
-					$pathResolver->to('composer.lock')->get(),
-				),
+				self::loadJsonToArray($pathResolver->to('composer.lock')->get()),
 			);
 		}
 

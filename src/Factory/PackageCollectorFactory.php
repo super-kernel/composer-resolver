@@ -8,8 +8,6 @@ use SuperKernel\ComposerResolver\Contract\ComposerJsonReaderInterface;
 use SuperKernel\ComposerResolver\Contract\ComposerLockReaderInterface;
 use SuperKernel\ComposerResolver\Package;
 use SuperKernel\ComposerResolver\PackageCollector;
-use SuperKernel\ComposerResolver\Provider\ComposerJsonReaderProvider;
-use SuperKernel\ComposerResolver\Provider\ComposerLockReaderProvider;
 use SuperKernel\Contract\PackageCollectorInterface;
 use SuperKernel\Contract\PackageInterface;
 use SuperKernel\Contract\PathResolverInterface;
@@ -25,22 +23,17 @@ use function unserialize;
 
 final readonly class PackageCollectorFactory
 {
-	private ComposerJsonReaderInterface $composerJsonReader;
-
-	private ComposerLockReaderInterface $composerLockReader;
-
 	private string $vendorDir;
 
 	private PathResolverInterface $cacheDir;
 
 	public function __construct(
-		private PathResolverInterface   $pathResolver,
-		private ProcessHandlerInterface $processHandler,
+		private PathResolverInterface       $pathResolver,
+		private ProcessHandlerInterface     $processHandler,
+		private ComposerJsonReaderInterface $composerJsonReader,
+		private ComposerLockReaderInterface $composerLockReader,
 	)
 	{
-		$this->composerJsonReader = new ComposerJsonReaderProvider()($pathResolver);
-		$this->composerLockReader = new ComposerLockReaderProvider()($pathResolver);
-
 		$this->vendorDir = $this->composerJsonReader['config']['vendor-dir'] ?? 'vendor';
 		$this->cacheDir = $pathResolver->to($this->vendorDir)->to('.super-kernel')->to('packages');
 
