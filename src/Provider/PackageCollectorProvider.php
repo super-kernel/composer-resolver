@@ -10,6 +10,7 @@ use SuperKernel\Attribute\Factory;
 use SuperKernel\Attribute\Provider;
 use SuperKernel\ComposerResolver\Factory\PackageCollectorFactory;
 use SuperKernel\ComposerResolver\PackageCollector;
+use SuperKernel\Contract\ClassAutoloaderInterface;
 use SuperKernel\Contract\PackageCollectorInterface;
 
 #[
@@ -31,6 +32,11 @@ final class PackageCollectorProvider
 	{
 		if (!isset(self::$packageRegistry)) {
 			self::$packageRegistry = $container->get(PackageCollectorFactory::class)->create();
+
+			$classAutoLoader = $container->get(ClassAutoloaderInterface::class);
+			foreach (self::$packageRegistry->getAllPackages() as $package) {
+				$classAutoLoader->addClassMap($package->getClassMap());
+			}
 		}
 
 		return self::$packageRegistry;
