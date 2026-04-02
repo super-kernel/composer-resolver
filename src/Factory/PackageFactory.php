@@ -32,9 +32,12 @@ final class PackageFactory
 {
 	private const array SCAN_KEYS = ['psr-4', 'psr-0', 'classmap'];
 
-	private readonly array   $autoload;
-	private readonly array   $autoloadDev;
-	private readonly string  $basePath;
+	private readonly array $autoload;
+
+	private readonly array $autoloadDev;
+
+	private readonly string $basePath;
+
 	private readonly ?string $type;
 
 	public function __construct(
@@ -53,8 +56,8 @@ final class PackageFactory
 	{
 		return new Package(
 			rawData : $this->rawData,
-			classMap: $this->getClassMap(),
 			files   : $this->getFiles(),
+			classMap: $this->getClassMap(),
 			type    : $this->type,
 		);
 	}
