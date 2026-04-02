@@ -29,14 +29,14 @@
     "prefer-stable": true,
     "require": {
         "php": "~8.4.0",
-        "super-kernel/attribute": "~1.0.0",
-        "super-kernel/contract": "~1.0.0",
-        "super-kernel/process-handler": "~1.0.0",
-        "super-kernel/tokenizer": "~1.0.0"
+        "super-kernel/attribute": "dev-main",
+        "super-kernel/contract": "dev-main",
+        "super-kernel/process-handler": "dev-main",
+        "super-kernel/tokenizer": "dev-main"
     },
     "require-dev": {
-        "super-kernel/path-resolver": "~1.0.0",
-        "super-kernel/reflector": "~1.0.0",
+        "super-kernel/path-resolver": "dev-main",
+        "super-kernel/reflector": "dev-main",
         "symfony/console": "~8.0.0"
     }
 }
